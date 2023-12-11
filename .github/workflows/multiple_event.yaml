@@ -3,7 +3,7 @@ on:
     push:
     issues:
         types: [opened]
-    workflow_dispatch:
+    workflow-dispatch:
 
 jobs:
     multiple-event-job:
