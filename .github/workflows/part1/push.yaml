@@ -1,4 +1,4 @@
-name: push-workflow
+name: push-workflow 2
 on: push
 # 어떤 이벤트로 인해 깃허브 액션을 트리거 시킬지 정할 수 있음
 # push 이벤트에 의해 트리거 하겠다
