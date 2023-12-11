@@ -1,0 +1,11 @@
+name: branch-filter
+on:
+    push:
+        branches: ['dev'] # dev 브랜치로 push할 때만 실행
+
+jobs:
+    branch-filter:
+        runs-on: ubuntu-latest
+        steps:
+            - name: echo
+              run: echo hello
