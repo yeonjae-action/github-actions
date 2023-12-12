@@ -1,9 +1,11 @@
 name: output
 on: push
 
-jobs: # test 를 키로 설정했고, 이를 사용
+jobs:
     create-output:
         runs-on: ubuntu-latest
+        outputs: # 이와 같이 output을 설정하면 다른 job에서도 이 output을 사용가능하다.
+            test: ${{ steps.check-output.outputs.test}}
         steps:
             - name: echo output
               id: check-output
@@ -12,3 +14,9 @@ jobs: # test 를 키로 설정했고, 이를 사용
             - name: check output # 앞에서 만든 output을 출력하는 작업
               run: |
                   echo ${{ steps.check-output.outputs.test}}
+    get-output: # create-output job이 완료되어야 test output이 생성되므로 create-output이 실행완료 이후에 실행되어야 한다.
+        needs: [create-output]
+        runs-on: ubuntu-latest
+        steps:
+            - name: get output
+              run: echo ${{ needs.create-output.outputs.test}}
