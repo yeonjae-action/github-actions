@@ -1,0 +1,14 @@
+name: output
+on: push
+
+jobs: # test 를 키로 설정했고, 이를 사용
+    create-output:
+        runs-on: ubuntu-latest
+        steps:
+            - name: echo output
+              id: check-output
+              run: | # 키는 test이고 value는 hello 인 output을 만들고
+                  echo "test=hello" >> $GITHUB_OUTPUT
+            - name: check output # 앞에서 만든 output을 출력하는 작업
+              run: |
+                  echo ${{ steps.check-output.outputs.test}}
