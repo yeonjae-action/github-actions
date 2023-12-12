@@ -14,6 +14,6 @@ jobs:
                     count=$((count+1))
                     sleep 1
                   done
-              timeout-minutes: 1 # job level에서 타임아웃 설정
+              timeout-minutes: 1 # step level에서 타임아웃 설정
             - name: echo
               run: echo hello
