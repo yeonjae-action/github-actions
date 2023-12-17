@@ -2,38 +2,38 @@ name: var-1
 on: push
 
 env:
-  level: workflow # workflow level에서 env를 구성
+    level: workflow # workflow level에서 env를 구성
 
 jobs:
-  get-env-1:
-    runs-on: ubuntu-latest
-    steps:
-    - name: check env
-      run: echo "LEVEL ${{ env.level }}"
-      # job내에 정의된 env가 없기 때문에 workflow에서 정의한 env 값을 가져올 것임
+    get-env-1:
+        runs-on: ubuntu-latest
+        steps:
+            - name: check env
+              run: echo "LEVEL ${{ env.level }}"
+              # job내에 정의된 env가 없기 때문에 workflow에서 정의한 env 값을 가져올 것임
 
-  get-env-2:
-    runs-on: ubuntu-latest
-    env:
-      level: job
-    steps:
-    - name: check env
-      run: echo "LEVEL ${{ env.level }}"
+    get-env-2:
+        runs-on: ubuntu-latest
+        env:
+            level: job
+        steps:
+            - name: check env
+              run: echo "LEVEL ${{ env.level }}"
 
-    get-env-3:
-    runs-on: ubuntu-latest
-    env:
-      level: job
-    steps:
-    - name: check env
-      run: echo "LEVEL ${{ env.level }}"
-      env:
-        level: step
+        get-env-3:
+            runs-on: ubuntu-latest
+            env:
+                level: job
+            steps:
+                - name: check env
+                  run: echo "LEVEL ${{ env.level }}"
+                  env:
+                      level: step
 
-    get-env:
-      runs-on: ubuntu-latest
-      steps:
-      - name: create env
-        run: echo "level=job" >> $GITHUB_ENV
-      - name: check env
-        run: echo "LEVEL ${{ env.level }}"
+        get-env:
+            runs-on: ubuntu-latest
+            steps:
+                - name: create env
+                  run: echo "level=job" >> $GITHUB_ENV
+                - name: check env
+                  run: echo "LEVEL ${{ env.level }}"
