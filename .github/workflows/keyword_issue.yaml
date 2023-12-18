@@ -15,12 +15,12 @@ jobs:
               run: |
                   echo level=Undefined >> $GITHUB_OUTPUT
 
-                  keyword=$(cat keyword-list.txt) 
+                  keywords=$(cat keyword-list.txt)
                   for keyword in $keywords; do
                     if [[ "${{ github.event.issue.title }}" =~ "$keyword" ]]; then
                       echo level=$keyword >> $GITHUB_OUTPUT
-                      fi
-                    done
+                    fi
+                  done
             - name: get output
               run: |
                   echo ${{ steps.get-keyword.outputs.level }}
