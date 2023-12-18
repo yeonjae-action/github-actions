@@ -29,7 +29,11 @@ jobs:
         needs: [get-keyword]
         if: needs.get-keyword.outputs.level != 'Undefined'
         runs-on: ubuntu-latest
-        environment: ${{ needs.get-keyword.outputs.level }}
+        # environment: ${{ needs.get-keyword.outputs.level }}
+        strategy:
+            matrix: # 시각적으로 어떤 환경을 사용했는지 확인할 수 있다.
+                environment: ['${{ needs.get-keyword.outputs.level }}']
+        environment: ${{ matrix.environment }}
         steps: # github.event.issue.html_url : 이슈의 주소
             - name: slack
               uses: slackapi/slack-github-action@v1.24.0
