@@ -15,7 +15,7 @@ function App() {
           target="_blank"
           rel="noopener noreferrer"
         >
-          Learn Github Action CI/CD test 1
+          Learn Github Action CI/CD test 2
         </a>
       </header>
     </div>
