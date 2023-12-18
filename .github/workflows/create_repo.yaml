@@ -24,5 +24,29 @@ jobs:
               run: |
                   echo ${{ secrets.PERSONAL_ACCESS_TOKEN }} | gh auth login --with-token
             - name: create-repo # 퍼블릭 레포 생성
+              id: create-repo
               run: |
                   gh repo create yeonjae-action/${{ inputs.prefix }}-${{ inputs.name }} --public --add-readme
+            - name: slack
+              if: always() # 두번째 스텝이 실패되더라도 항상 실행하도록
+              uses: slackapi/slack-github-action@v1.24.0
+              with:
+                  payload: |
+                      {
+                        "attachments": [
+                          {
+                            "pretext": "create repo result",
+                            "color": "28a745",
+                            "fields": [
+                              {
+                                "title": "create repo result ${{ steps.create-repo.outcome }}",
+                                "short": true,
+                                "value": "${{ inputs.prefix }}-${{ inputs.name }}"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+              env:
+                  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+                  SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
