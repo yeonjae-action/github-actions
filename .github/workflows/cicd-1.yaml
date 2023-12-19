@@ -13,7 +13,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: checkout the code # 코드 체크아웃 ( 코드 받아오기 )
-              uses: actions/checkout@v4 
+                uses: actions/checkout@v4 
             - name: setup-node # 18 버전의 nodeJS를 설치
                 uses: actions/setup-node@v3
                 with:
@@ -44,7 +44,7 @@ jobs:
             contents: read
         steps:
             - name: checkout the code # 코드 가져오기 위해 체크아웃
-              uses: actions/checkout@v4
+                uses: actions/checkout@v4
             - name: Configure AWS Credentials # AWS 권한 얻기, AWS access 하기 위한 정보 전달함
                 id: credentials
                 uses: aws-actions/configure-aws-credentials@v4
@@ -74,7 +74,7 @@ jobs:
             contents: read
         steps:
             - name: checkout the code # 깃헙 코드를 가져오기 위해 체크아웃
-              uses: actions/checkout@v4
+                uses: actions/checkout@v4
             - name: Configure AWS Credentials # AWS 액션 사용
                 id: credentials
                 uses: aws-actions/configure-aws-credentials@v4
