@@ -2,7 +2,7 @@ name: cache
 on:
     push:
         paths:
-            - 'react-app/**'
+            - 'my-app/**'
 
 jobs:
     cache:
@@ -21,11 +21,11 @@ jobs:
                   key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }} # 캐시의 키 운영체제와 패키지락json의 해시 값으로 구성됨 ( 운영체제 별 의존성 별로 캐시를 구분하기 위함 ) 의존성 변경이 있을 때 새로운 캐시를 하기 위함
                   restore-keys: | # 캐시 복구를 위한 키 ( 정확히 일치하는 키가 없을 경우 가장 가까운 캐시를 찾아서 사용하기 위함, 빠르게 찾을 수 있음 )
                       ${{ runner.os }}-node-
-            - name: Install dependencies # react-app에서 필요한 dependency를 설치함
+            - name: Install dependencies # my-app에서 필요한 dependency를 설치함
               run: |
-                  cd react-app
+                  cd my-app
                   npm ci
             - name: npm build # build 수행
               run: |
-                  cd react-app
+                  cd my-app
                   npm run build
