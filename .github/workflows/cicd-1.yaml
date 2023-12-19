@@ -1,10 +1,10 @@
 name: cicd-1
 on:
     pull_request: # pr 생성될 때 CI 프로세스가 트리거 됨
-        types: [opened, synchronized, closed] # pr 이 open 되거나, 동기화 될 때는 CI, pr이 merge되면 CD
+        types: [opened, synchronize, closed] # pr 이 open 되거나, 동기화 될 때는 CI, pr이 merge되면 CD
         branches: [dev]
         paths:
-            - 'react-app/**'
+            - 'my-app/**'
 
 jobs:
     test: # pr이 open되거나 synchronize 될 때
@@ -22,7 +22,7 @@ jobs:
               uses: actions/cache@v3
               with:
                   path: ~/.npm
-                  key: ${{ runner.os }}-node-${{ hasFiles('**/package-lock.json') }}
+                  key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
                   restore-keys: |
                       ${{ runner.os }}-node-
             - name: Install dependencies # dependency 설치
@@ -49,7 +49,7 @@ jobs:
               uses: aws-actions/configure-aws-credentials@v4
               with:
                   aws-region: ${{ vars.AWS_REGION }}
-                  role-to-assume: ${{ secretes.AWS_ROLE_TO_ASSUME }}
+                  role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
             - name: Login to Amazon ECR
               id: login-ecr
               uses: aws-actions/amazon-ecr-login@v2
@@ -95,7 +95,7 @@ jobs:
             - name: deploy # 헬름 차트( 쿠버네티스에 배포할 환경의 집합 ) 위치, 새로운 namespace 지정하도록 지시,
               id: status
               run: |
-                  helm upgrade --install my-app kubernetes/my-app --create-namespace --namespace my-app-${{vars.SUFFIX}} \
+                  helm upgrade --install my-app kubernetes/my-app --create-namespace --namespace my-app-${{ vars.SUFFIX }} \
                   --set image.tag=${{ github.sha }} \
                   --set image.repository=${{ secrets.REGISTRY }}/${{ vars.REPOSITORY }}
             - name: notify
@@ -104,17 +104,17 @@ jobs:
               with:
                   payload: |
                       {
-                          "text":"message",
-                          "blocks": [
-                              {
-                                  "type":"section",
-                                  "text":{
-                                      "type": "mrkdwn",
-                                      "text":"Environment : dev, Deploy Result : ${{ steps.status.outcome }}, Repository : ${{ github.repository }}"
-                                  }
-                              }
-                          ]
+                        "text": "message",
+                        "blocks": [
+                          {
+                            "type": "section",
+                            "text": {
+                              "type": "mrkdwn",
+                              "text": "Environment : dev, Deploy Result : ${{ steps.status.outcome }}, Repository : ${{ github.repository }}."
+                            }
+                          }
+                        ]
                       }
-                  env:
-                      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-                      SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+              env:
+                  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+                  SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
