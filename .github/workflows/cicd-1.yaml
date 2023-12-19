@@ -1,6 +1,6 @@
 name: cicd-1
 on:
-    pull_request:
+    pull_request: # pr 생성될 때 CI 프로세스가 트리거 됨
         types: [opened, synchronized, closed] # pr 이 open 되거나, 동기화 될 때는 CI, pr이 merge되면 CD
         branches: [dev]
         paths:
@@ -8,22 +8,114 @@ on:
 
 jobs:
     test: # pr이 open되거나 synchronize 될 때
+        # CI 단계에서 사용하는 job : React Application dependency 설치, build 작업 수행, 
         if: github.event.action == 'opened' || github.event.action == 'synchronize'
         runs-on: ubuntu-latest
         steps:
-            - name: checkout
-              uses: actions/checkout@v4
+            - name: checkout the code # 코드 체크아웃 ( 코드 받아오기 )
+              uses: actions/checkout@v4 
+            - name: setup-node # 18 버전의 nodeJS를 설치
+                uses: actions/setup-node@v3
+                with:
+                    node-version: 18
+            - name: Cache Node.js modules # cache 액션 사용
+                uses: actions/cache@v3
+                with:
+                    path: ~/.npm
+                    key: ${{ runner.os }}-node-${{ hasFiles('**/package-lock.json') }}
+                    restore-keys: | 
+                        ${{ runner.os }}-node-
+            - name: Install dependencies # dependency 설치
+                run: |
+                    cd my-app
+                    npm ci
+            - name: npm build # build
+                run: | 
+                    cd my-app
+                    npm run build
+                
 
     image-build: # pr이 merge될 때 - CD 단계에서 실행되는 job
+        # docker commend를 통해 my-app을 이미지로 만들고 만들어진 이미지를 aws ECR로 푸시
         if: github.event.pull_request.merged == true
         runs-on: ubuntu-latest
+        permissions: # AWS에 접근하기 위해 action을 사용함 
+            id-token: write
+            contents: read
         steps:
-            - name: checkout
+            - name: checkout the code # 코드 가져오기 위해 체크아웃
               uses: actions/checkout@v4
+            - name: Configure AWS Credentials # AWS 권한 얻기, AWS access 하기 위한 정보 전달함
+                id: credentials
+                uses: aws-actions/configure-aws-credentials@v4
+                with:
+                    aws-region: ${{ vars.AWS_REGION }}
+                    role-to-assume: ${{ secretes.AWS_ROLE_TO_ASSUME }}
+            - name: Login to Amazon ECR
+                id: login-ecr
+                uses: aws-actions/amazon-ecr-login@v2
+                with:
+                    mask-password: 'true'
+            - name: docker build & push # 애플리케이션을 이미지로 만들고 이미지를 ECR로 push 
+                # registry는 민감한 정보이므로 secret 지정, Repository는 환경변수로 지정
+                # docker로 생성한 이미지를 이미지 저장소에 푸시하려면 이미지 태그가 필요함  github.sha 를 이미지 태그로 지정
+                # github action workflow를 트리거한 커밋, github.sha를 이미지 태그로 지정
+                # 커밋을 이미지 태그로 사용하면 해당 이미지가 어떤 코드 변경에 기반한 것인지 명확하게 알 수 있다.
+                # 이를 통해 버전관리가 용이해지고, 원인파악, 롤백에 용이
+                run: |
+                    docker build -f Dockerfile --tag ${{ secrets.REGISTRY }}/${{ vars.REPOSITORY }}:${{ github.sha }} .
+                    docker push ${{ secrets.REGISTRY }}/${{ vars.REPOSITORY }}:${{ github.sha }}
 
     deploy: # image build job이 성공되면 실행되는 job - CD 단계에서 실행되는 job
         runs-on: ubuntu-latest
         needs: [image-build]
+        permissions:
+            id-token: write
+            contents: read
         steps:
-            - name: checkout
+            - name: checkout the code # 깃헙 코드를 가져오기 위해 체크아웃
               uses: actions/checkout@v4
+            - name: Configure AWS Credentials # AWS 액션 사용
+                id: credentials
+                uses: aws-actions/configure-aws-credentials@v4
+                with:
+                    aws-region: ${{ vars.AWS_REGION }}
+                    role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+            - name: setup kubectl # kubectl 사용
+                uses: azure/setup-kubectl@v3
+                with:
+                    version: latest
+            - name: setup helm
+                uses: azure/setup-helm@v3
+                with:
+                    version: v3.11.1
+            - name: access kubernetes # 쿠버네티스 클러스터 이름이 필요하기 때문에 환경변수로 지정함, 이 스텝이 완료되면 지정된 클러스터에 접근할 수 있게 됩니다.
+                run: |
+                    aws eks update-kubeconfig --name ${{ vars.CLUSTER_NAME }}
+            - name: deploy # 헬름 차트( 쿠버네티스에 배포할 환경의 집합 ) 위치, 새로운 namespace 지정하도록 지시, 
+                id: status
+                run: |
+                    helm upgrade --install my-app kubernetes/my-app --create-namespace --namespace my-app-${{vars.SUFFIX}} \
+                    --set image.tag=${{ github.sha }} \
+                    --set image.repository=${{ secrets.REGISTRY }}/${{ vars.REPOSITORY }}
+            - name: notify
+                if: always()
+                uses: slackapi/slack-github-action@v1.24.0
+                with:
+                    payload: |
+                        {
+                            "text":"message",
+                            "blocks": [
+                                {
+                                    "type":"section",
+                                    "text":{
+                                        "type": "mrkdwn",
+                                        "text":"Environment : dev, Deploy Result : ${{ steps.status.outcome }}, Repository : ${{ github.repository }}"
+                                    }
+                                }
+                            ]
+                        }
+                    env:
+                        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+                        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
