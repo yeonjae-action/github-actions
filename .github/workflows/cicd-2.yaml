@@ -92,7 +92,7 @@ jobs:
         strategy:
             matrix:
                 environment: ['${{ needs.set-environment.outputs.environment }}']
-            environment: ${{ matrix.environment }}
+        environment: ${{ matrix.environment }}
         steps:
             - name: checkout the code # 깃헙 코드를 가져오기 위해 체크아웃
               uses: actions/checkout@v4
