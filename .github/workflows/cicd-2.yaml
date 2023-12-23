@@ -44,6 +44,9 @@ jobs:
               run: |
                   echo ${{ github.base_ref }}
                   echo "environment=dev" >> $GITHUB_OUTPUT
+
+                  if [[ ${{ github.base_ref }} == "master" ]]; then
+                  echo "environment=prod" >> $GITHUB_OUTPUT 
                   fi
             - name: check env
               run: echo ${{ steps.set-env.outputs.environment }}
